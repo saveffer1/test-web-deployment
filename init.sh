@@ -34,7 +34,11 @@ apt-get install -y -q software-properties-common sshpass
 if ! command -v ansible &>/dev/null; then
   apt-add-repository -y ppa:ansible/ansible
   apt-get update -y -q
-  apt-get install -y -q ansible
+  sudo apt-get -y -q \
+      -o Acquire::Retries=3 \
+      -o Acquire::http::Timeout=15 \
+      -o Acquire::https::Timeout=15 \
+      install ansible
 else
   echo -e "${GREEN}✓ Ansible already installed.${NC}"
 fi
