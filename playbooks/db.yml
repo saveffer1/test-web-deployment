@@ -1,0 +1,4 @@
+- name: Configure Database Server
+  hosts: db_hosts
+  roles:
+    - mariadb

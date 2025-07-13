@@ -1,0 +1,34 @@
+---
+# tasks file for chrony_client
+
+- name: Install chrony on client
+  ansible.builtin.apt:
+        name: chrony
+        state: present
+  register: chrony_install
+  retries: 3
+  delay: 5
+  until: chrony_install is succeeded
+
+- name: Configure chrony as NTP Client
+  copy:
+    dest: /etc/chrony/chrony.conf
+    content: |
+      driftfile /var/lib/chrony/chrony.drift
+      makestep 1.0 3
+      rtcsync
+      server 10.11.13.254 iburst
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart chrony
+  become: true
+
+- name: Ensure Chrony service is running
+  service:
+    name: chrony
+    state: restarted
+    enabled: yes
+  become: true
+  changed_when: false
+

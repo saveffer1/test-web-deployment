@@ -1,0 +1,10 @@
+---
+# handlers file for chrony_server
+- name: restart chrony
+  become: true
+  ansible.builtin.systemd:
+    name: chrony
+    state: restarted
+    daemon_reload: yes
+    no_block: yes
+    enabled: true

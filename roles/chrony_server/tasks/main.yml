@@ -1,0 +1,30 @@
+---
+- name: Install chrony on server
+  apt:
+    name: chrony
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Configure chrony as NTP Server
+  copy:
+    dest: /etc/chrony/chrony.conf
+    content: |
+      driftfile /var/lib/chrony/chrony.drift
+      local stratum 10
+      makestep 1.0 3
+      rtcsync
+      allow 10.11.13.0/24
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart chrony
+  become: true
+
+- name: Ensure Chrony service is running
+  service:
+    name: chrony
+    state: restarted
+    enabled: yes
+  become: true
+  changed_when: false

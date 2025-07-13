@@ -1,0 +1,20 @@
+# /etc/coredns/Corefile
+
+internal:53 {
+    hosts {
+        10.11.13.254	gateway.internal
+        10.11.13.10	    web1.internal
+        10.11.13.13	    api.internal
+	    10.11.13.14	    db.internal
+        fallthrough
+    }
+    cache 30
+    forward . 8.8.8.8 1.1.1.1
+    log
+}
+
+.:53 {
+    cache 30
+    forward . 8.8.8.8 8.8.4.4
+    log
+}

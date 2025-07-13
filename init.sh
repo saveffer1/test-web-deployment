@@ -57,7 +57,7 @@ echo -e "${GREEN}✓ SSH key generated at ${PRIVATE_KEY}.${NC}"
 echo -e "${BLUE}[${BOLD}STEP 3${NC}${BLUE}] Distributing SSH public key to remote hosts...${NC}"
 
 get_hosts_for_ssh_copy_id() {
-  awk '/ansible_ssh_host=/ {print $1, gensub(/.*=(.*)$/, "\\1", "g")}' "$1"
+  awk '/ansible_host=/ {print $1, gensub(/.*=(.*)$/, "\\1", "g")}' "$1"
 }
 
 echo -e "${CYAN}DEBUG:${NC} Attempting to use inventory file: '${INVENTORY_FILE}'"
@@ -70,7 +70,7 @@ fi
 
 HOST_IPS=$(get_hosts_for_ssh_copy_id "$INVENTORY_FILE")
 if [ -z "$HOST_IPS" ]; then
-  echo -e "${RED}ERROR:${NC} No hosts with 'ansible_ssh_host' found." >&2
+  echo -e "${RED}ERROR:${NC} No hosts with 'ansible_host' found." >&2
   exit 1
 fi
 

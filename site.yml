@@ -1,4 +1,6 @@
 ---
+- import_playbook: playbooks/gw.yml
+- import_playbook: playbooks/client.yml
 - import_playbook: playbooks/db.yml
-- import_playbook: playbooks/api.yml
-- import_playbook: playbooks/web.yml
+# - import_playbook: playbooks/api.yml
+# - import_playbook: playbooks/web.yml

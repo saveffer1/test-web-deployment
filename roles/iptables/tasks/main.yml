@@ -1,0 +1,30 @@
+---
+
+- name: Preseed iptables-persistent autosave for IPv4 & IPv6
+  ansible.builtin.debconf:
+    name: iptables-persistent
+    question: "{{ item.question }}"
+    value: "true"
+    vtype: boolean
+  loop:
+    - { question: "netfilter-persistent/autosave_v4" }
+    - { question: "netfilter-persistent/autosave_v6" }
+  become: true
+
+- name: Install iptables-persistent
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Ensure SNAT MASQUERADE rule exists on eth0
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    out_interface: eth0
+    jump: MASQUERADE
+    state: present
+  become: true
+  register: snat_rule
+  notify: Save iptables rules

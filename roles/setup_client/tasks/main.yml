@@ -1,0 +1,35 @@
+---
+# tasks file for setup_client
+
+- name: Deploy Netplan configuration file
+  ansible.builtin.copy:
+    dest: /etc/netplan/50-cloud-init.yaml
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth0:
+            dhcp4: true
+            routes:
+              - to: default
+                via: {{ hostvars['gw_server1']['ansible_host'] }}
+            nameservers:
+              addresses:
+                - {{ hostvars['gw_server1']['ansible_host'] }}
+  become: true
+
+- name: Apply Netplan configuration
+  command: netplan apply
+  become: true
+
+- name: Verify gateway.internal resolves (getent || dig || ping)
+  ansible.builtin.shell: |
+    getent hosts gateway.internal \
+      || dig +short gateway.internal \
+      || ping -c1 gateway.internal
+  register: check_gw
+  changed_when: false
+  failed_when: check_gw.rc != 0

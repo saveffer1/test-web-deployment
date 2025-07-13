@@ -1,0 +1,7 @@
+---
+
+- name: Configure Client
+  hosts: client_hosts
+  roles:
+    - setup_client
+    - chrony_client

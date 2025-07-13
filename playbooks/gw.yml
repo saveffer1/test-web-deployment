@@ -1,0 +1,7 @@
+---
+- name: Configure Gateway Server
+  hosts: gw_hosts
+  roles:
+    - iptables
+    - chrony_server
+    - coredns

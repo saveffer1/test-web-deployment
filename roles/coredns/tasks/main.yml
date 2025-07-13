@@ -1,0 +1,112 @@
+---
+# tasks file for coredns
+
+# close systemd-resolved
+- name: Stop and disable systemd-resolved
+  systemd:
+    name: systemd-resolved
+    state: stopped
+    enabled: false
+
+- name: Mask systemd-resolved
+  systemd:
+    name: systemd-resolved
+    masked: true
+  when: ansible_facts['services']['systemd-resolved'] is defined
+
+# clear resolv.conf
+- name: Remove symlink to stub resolver
+  file:
+    path: /etc/resolv.conf
+    state: absent
+  when: ansible_facts['files']['/etc/resolv.conf']['islnk'] | default(false)
+
+- name: Create resolv.conf pointing to CoreDNS
+  copy:
+    dest: /etc/resolv.conf
+    content: |
+      nameserver 127.0.0.1
+      options edns0 trust-ad
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Check if CoreDNS is already installed in version 1.12.2
+  stat:
+    path: /usr/local/bin/coredns # Assuming CoreDNS binary is installed here
+  register: coredns_binary_status
+
+- name: Install CoreDNS for DNS server
+  get_url:
+    url: https://github.com/coredns/coredns/releases/download/v1.12.2/coredns_1.12.2_linux_amd64.tgz
+    dest: /tmp/coredns.tgz
+    mode: '0644'
+  register: download_coredns
+  changed_when: download_coredns.checksum_dest != download_coredns.checksum_src
+  when: not coredns_binary_status.stat.exists or coredns_binary_status.stat.size < 1000
+
+- name: Extract CoreDNS binary
+  unarchive:
+    src: /tmp/coredns.tgz
+    dest: /usr/local/bin/
+    remote_src: yes
+    mode: '0755'
+    creates: /usr/local/bin/coredns
+  when: download_coredns is changed
+
+- name: Clean up tarball
+  ansible.builtin.file:
+    path: /tmp/coredns.tgz
+    state: absent
+  when: download_coredns is changed
+
+- name: Ensure CoreDNS config dir exists
+  file:
+    path: /etc/coredns
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Deploy CoreDNS Corefile
+  template:
+    src: Corefile.j2
+    dest: /etc/coredns/Corefile
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: restart coredns
+
+- name: Ensure CoreDNS systemd unit exists
+  copy:
+    dest: /etc/systemd/system/coredns.service
+    content: |
+      [Unit]
+      Description=CoreDNS DNS Server
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/coredns -conf /etc/coredns/Corefile
+      Restart=on-failure
+      LimitNOFILE=1048576
+
+      [Install]
+      WantedBy=multi-user.target
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  register: coredns_service
+  changed_when: coredns_service is changed
+  notify: daemon-reload
+
+- name: Enable & start CoreDNS
+  systemd:
+    name: coredns
+    enabled: true
+    state: started
+  become: true
+  when: coredns_service is changed
