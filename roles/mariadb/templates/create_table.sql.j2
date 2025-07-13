@@ -1,0 +1,9 @@
+-- templates/create_table.sql.j2
+CREATE TABLE IF NOT EXISTS `{{ table.name }}` (
+{%- for col in table.columns %}
+  `{{ col.name }}` {{ col.type }}{{ "," if not loop.last }}
+{%- endfor %}
+)
+ENGINE=InnoDB
+DEFAULT CHARSET={{ db.encoding }}
+COLLATE={{ db.collation }};

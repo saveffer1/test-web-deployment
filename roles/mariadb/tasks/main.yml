@@ -18,27 +18,29 @@
   become: true
 
 - name: Create application databases
-  become: true
   mysql_db:
     name: "{{ item.name }}"
     encoding: "{{ item.encoding }}"
     collation: "{{ item.collation }}"
     state: present
-    login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
   loop: "{{ mariadb_databases }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
 
 - name: Create database users with privileges
-  become: true
   mysql_user:
     name: "{{ item.name }}"
     host: "{{ item.host }}"
     password: "{{ item.password }}"
     priv: "{{ item.priv }}"
     state: present
-    login_user: root
     login_unix_socket: /var/run/mysqld/mysqld.sock
   loop: "{{ mariadb_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
 
 - name: Deploy optimized my.cnf
   template:
@@ -48,4 +50,32 @@
     group: root
     mode: "0644"
   notify: restart mariadb
+  become: true
+
+- name: Render SQL template for each table schema
+  ansible.builtin.template:
+    src: create_table.sql.j2
+    dest: "/tmp/{{ db.name }}_{{ table.name }}.sql"
+  vars:
+    db: "{{ item.0 }}"
+    table: "{{ item.1 }}"
+  loop: "{{ mariadb_databases | subelements('tables') }}"
+  loop_control:
+    loop_var: item
+    label: "{{ item.0.name }}.{{ item.1.name }}"
+  become: true
+
+- name: Import SQL schema into databases
+  ansible.builtin.mysql_db:
+    name: "{{ db.name }}"
+    state: import
+    target: "/tmp/{{ db.name }}_{{ table.name }}.sql"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  vars:
+    db: "{{ item.0 }}"
+    table: "{{ item.1 }}"
+  loop: "{{ mariadb_databases | subelements('tables') }}"
+  loop_control:
+    loop_var: item
+    label: "{{ item.0.name }}.{{ item.1.name }}"
   become: true

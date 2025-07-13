@@ -5,6 +5,13 @@ mariadb_databases:
   - name: appdb
     encoding: utf8mb4
     collation: utf8mb4_general_ci
+    # Define tables to create with column definitions
+    tables:
+      - name: users
+        columns:
+          - { name: id,    type: 'INT AUTO_INCREMENT PRIMARY KEY' }
+          - { name: name,  type: 'VARCHAR(255) NOT NULL' }
+          - { name: email, type: 'VARCHAR(255) UNIQUE NOT NULL' }
 
 mariadb_users:
   - name: appuser
