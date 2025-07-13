@@ -1,2 +1,51 @@
 ---
 # tasks file for mariadb
+
+- name: Install MariaDB server
+  apt:
+    name:
+      - mariadb-server
+      - python3-pymysql
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Ensure MariaDB service is enabled & running
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+  become: true
+
+- name: Create application databases
+  become: true
+  mysql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding }}"
+    collation: "{{ item.collation }}"
+    state: present
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  loop: "{{ mariadb_databases }}"
+
+- name: Create database users with privileges
+  become: true
+  mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.priv }}"
+    state: present
+    login_user: root
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  loop: "{{ mariadb_users }}"
+
+- name: Deploy optimized my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /etc/mysql/mariadb.conf.d/50-custom.cnf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart mariadb
+  become: true

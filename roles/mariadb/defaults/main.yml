@@ -1,2 +1,17 @@
 ---
 # defaults file for mariadb
+
+mariadb_databases:
+  - name: appdb
+    encoding: utf8mb4
+    collation: utf8mb4_general_ci
+
+mariadb_users:
+  - name: appuser
+    host: "%"
+    password: "AppUserPass!"
+    priv: "appdb.*:ALL"
+
+mariadb_bind_address: "0.0.0.0"
+mariadb_allowed_networks:
+  - 0.0.0.0/24

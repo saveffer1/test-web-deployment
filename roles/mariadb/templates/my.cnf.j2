@@ -1,0 +1,15 @@
+# /etc/mysql/mariadb.conf.d/50-custom.cnf
+[mysqld]
+bind-address = {{ mariadb_bind_address }}
+max_connections = 200
+innodb_buffer_pool_size = 1G
+innodb_file_per_table = 1
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/mysql-slow.log
+long_query_time = 2
+
+# Security
+skip-symbolic-links
+
+[client]
+default-character-set = utf8mb4
