@@ -1,0 +1,4 @@
+- name: Configure API Server
+  hosts: api_hosts
+  roles:
+    - nodejs

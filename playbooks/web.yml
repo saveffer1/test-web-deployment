@@ -1,0 +1,5 @@
+---
+- name: Configure Web Server
+  hosts: web_hosts
+  roles:
+    - nginx
