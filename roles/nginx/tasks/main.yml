@@ -1,2 +1,60 @@
+# roles/static_site/tasks/main.yml
 ---
-# tasks file for nginx
+
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Ensure site directory exists
+  file:
+    path: "{{ site_dir }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: true
+
+- name: Deploy Nginx site configuration
+  template:
+    src: static_site_nginx.j2
+    dest: /etc/nginx/sites-available/static_site.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload Nginx
+  become: true
+
+- name: Enable static_site vhost
+  file:
+    src: /etc/nginx/sites-available/static_site.conf
+    dest: /etc/nginx/sites-enabled/static_site.conf
+    state: link
+  notify: Reload Nginx
+  become: true
+
+- name: Disable default Nginx vhost
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx
+  become: true
+
+- name: Deploy static index.html
+  template:
+    src: index.html.j2
+    dest: "{{ site_dir }}/index.html"
+    owner: www-data
+    group: www-data
+    mode: "0644"
+  notify: Reload Nginx
+  become: true
+
+- name: Ensure Nginx is running and enabled
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+  become: true

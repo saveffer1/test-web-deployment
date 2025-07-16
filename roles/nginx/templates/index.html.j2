@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ ansible_hostname }} Data</title>
+  <script>
+    async function loadData() {
+      try {
+        const res = await fetch('/api/');
+        const data = await res.json();
+        const tbody = document.querySelector('#data-table tbody');
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          ['id','name','email'].forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = row[col];
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', loadData);
+  </script>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>{{ ansible_hostname }}</h1>
+  <table id="data-table">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+    </thead>
+    <tbody>
+      <!-- rows populated via JS -->
+    </tbody>
+  </table>
+</body>
+</html>

@@ -1,2 +1,4 @@
 ---
 # defaults file for nginx
+site_dir: /var/www/html
+nginx_port: 80
