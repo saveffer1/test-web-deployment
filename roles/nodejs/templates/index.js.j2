@@ -1,0 +1,49 @@
+const mysql = require('mysql2/promise');
+const express = require('express');
+const cors = require('cors');
+
+const db = mysql.createPool({
+    host: '{{ env.DB_HOST }}',
+    port: '{{ env.DB_PORT }}',
+    user: '{{ env.DB_USER }}',
+    password: '{{ env.DB_PASSWORD }}',
+    database: '{{ env.DB_NAME }}',
+});
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// GET /
+app.get('/', async (req, res, next) => {
+  try {
+    const [rows] = await db.query('SELECT id, name, email FROM users');
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /
+app.post('/', async (req, res, next) => {
+  const { name, email } = req.body;
+  if (!name || !email) return res.status(400).json({ error: 'Missing name or email' });
+  try {
+    const [result] = await db.execute(
+      'INSERT INTO users (name, email) VALUES (?, ?)',
+      [name, email]
+    );
+    res.status(201).json({ id: result.insertId, name, email });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const port = {{ env.PORT }};
+app.listen(port, () => console.log(`Server listening on port ${port}`));

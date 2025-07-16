@@ -1,0 +1,79 @@
+# Ensure app user & group
+- name: Ensure group {{ app_group }} exists
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    state: present
+  become: true
+
+- name: Ensure user {{ app_user }} exists
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    shell: /usr/sbin/nologin
+    create_home: no
+  become: true
+
+- name: Create app directory {{ app_dir }}
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+  become: true
+
+- name: Create src directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}/src"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  become: true
+
+- name: Render package.json
+  ansible.builtin.template:
+    src: package.json.j2
+    dest: "{{ app_dir }}/package.json"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Render index.js
+  ansible.builtin.template:
+    src: index.js.j2
+    dest: "{{ app_dir }}/src/index.js"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+
+- name: Render systemd service file
+  ansible.builtin.template:
+    src: express_app.service.j2
+    dest: "/etc/systemd/system/{{ app_name }}.service"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Express App
+  become: true
+
+- name: Install npm dependencies
+  community.general.npm:
+    path: "{{ app_dir }}"
+    production: yes
+  become: true
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Enable and start Express service
+  ansible.builtin.systemd:
+    name: "{{ app_name }}"
+    state: started
+    enabled: yes
+  become: true

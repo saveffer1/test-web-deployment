@@ -1,0 +1,17 @@
+[Unit]
+Description=Express.js API Service for {{ app_name }}
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_dir }}
+Environment="NODE_ENV={{ node_env }}"
+EnvironmentFile=-{{ app_dir }}/.env
+ExecStart=/usr/bin/node {{ app_dir }}/src/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

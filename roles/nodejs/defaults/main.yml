@@ -1,2 +1,21 @@
 ---
 # defaults file for nodejs
+
+nodejs_version: "18.x"
+
+app_name: express-mysql-api
+app_version: "1.0.0"
+app_user: nodeapp
+app_group: nodeapp
+app_dir: /opt/{{ app_name }}
+repo_src: "{{ playbook_dir }}/templates/{{ app_name }}.tar.gz"
+node_env: production
+nodejs_port: 3000
+
+env:
+  DB_HOST: 10.11.13.14
+  DB_PORT: 3306
+  DB_USER: appuser
+  DB_PASSWORD: "AppUserPass!"
+  DB_NAME: appdb
+  PORT: "{{ nodejs_port }}"
